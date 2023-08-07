@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		
+		<style>
+			
+			#box{
+				display:flex;
+				flex-direction: column;
+				width: 90vw;
+				height: 90vh;
+			}
+			#werbung{
+				float: left;
+				height:20%;
+				margin-top: 2px;
+				border: 2px solid black;
+				flex:1;
+			}
+			
+			#log{
+				float: left;
+				height:100%;
+				flex: 1;
+				border: 2px solid black;
+				display: flex;
+				flex-direction: column;
+
+			}
+			#user{
+				float:right;
+				height: 100%;
+				flex:2;
+				margin-left: 2px;
+				border: 2px solid black;
+			}
+			#headline{
+				float:left;
+				border: 2px solid black;
+				flex: 1;
+				margin: 2px;
+			}
+			#refresh{
+				float:left;
+				margin: 2px;
+				flex: 1;
+			}
+			#box2{
+				flex: 3;
+				display: flex;
+				margin-bottom: 4px;
+			}
+			#box3{
+				display: flex;
+			}
+			#content{
+				flex: 1;
+				border: 2px solid black;
+				margin: 2px;
+			}
+			.emailcontainer{
+				border: 2px solid blue;
+				display: flex;
+				margin: 2px;
+			}
+			.emailperson{
+				flex: 19;
+			}
+			.emailbtnremove{
+				flex: 1;
+				color: red;
+			}
+			#add{
+				float: right;
+				color: rgb(0, 150, 0);
+				margin-right: 2px;
+				margin-top: 2px;
+			}
+			#email{
+				margin-top: 2px;
+				margin-left: 2px;
+
+			}
+		</style>
+	</head>
+	<body>
+	<div id="box">
+		<div id="box2">
+			<div id="log">
+				<div id="box3">
+					<div id="headline">Log:</div>
+					<button id="refresh" onclick="refresh()">refresh</button>
+				</div>
+				<div id="content"></div>
+			</div>
+			<div id="user">
+				<label for="email">Person hinzufügen:</label>
+				<input type="email" id="email" name="email" placeholder="Gib deine E-Mail-Adresse ein">
+				<button id="add" onclick="add(true)">add</button>
+				<div id="emails">
+					<div class="emailcontainer" id="user0container"><div class="emailperson" id="user0email">Blubb@bluibb.de</div><button class="emailbtnremove" id="user0remove">remove</button></div>
+				</div>
+			</div>
+		</div>
+		<div id="werbung"></div>	
+	</div>
+	<script>
+		// Funktion zum aktualisieren des Logs
+		window.addEventListener('load', refresh());
+		
+		
+		function refresh(){
+			ip=window.location.host;
+			todo = {"todo" : "HoleLogdaten"};
+			jsonData = JSON.stringify(todo);
+			// Hole Loginformationen
+			fetch(window.location.protocol + "://" +ip, {
+                                                method: "PUT",
+                                                headers: {
+                                                        "Content-Type": "application/json"
+                                                },
+                                                body: jsonData
+                                                })
+				.then(response => response.text())
+				.then(data => {
+				//Teilt den Text in ein Array auf
+				data = JSON.parse(data);
+				data = data['log'];
+				document.getElementById("content").innerHTML="";
+				for(let i=data.length-1; i>=0; i--){
+					if(data[i]['zeit']!=""){
+					//neues div Element mit dem inhalt der Zeile i erstellen
+					a="<div>" + data[i]['zeit']+"   "+  data[i]['ereignis']+  "</div>";
+					//Zur website hinzufügen
+					document.getElementById("content").innerHTML+= a;
+					}
+				}
+				// Email Liste aktualisieren
+				add(false);
+				})
+				.catch(error => {
+				// Tritt ein, wenn ein Fehler beim Einlesen auftritt
+				console.error('Fehler beim Aktualisieren des Logs', error);
+				});
+			}
+		
+			function add(pAdd){
+				//fügt die neue E-Mail der Liste hinzu
+				if(pAdd){
+					a=document.getElementById("email").value
+					todo = {"todo" : "AddMail",  "Mail" : a};	
+					jsonData = JSON.stringify(todo);
+					// Hole Loginformationen
+					fetch(window.location.protocol + "://" +ip, {
+						method: "PUT",
+						headers: {
+								"Content-Type": "application/json"
+						},
+						body: jsonData
+						})
+					.then(response => response.text())
+					.then(data => {})
+					.catch(error => {
+					// Tritt ein, wenn ein Fehler beim Einlesen auftritt
+					console.error('Fehler beim Speichern der Email', error);
+				});
+				
+				}
+				
+				//holt die aktuelle Liste
+				todo = {"todo" : "HoleMail"};
+							jsonData = JSON.stringify(todo);
+							// Hole Loginformationen
+							fetch(window.location.protocol + "://" +ip, {
+                                                method: "PUT",
+                                                headers: {
+                                                        "Content-Type": "application/json"
+                                                },
+                                                body: jsonData
+                                                })
+                                	.then(response => response.text())
+                                	.then(data => {
+				      		data = JSON.parse(data);
+		                                data = data['mail'];
+        		                        document.getElementById("emails").innerHTML="";
+                		                for(let i=data.length-1; i>=0; i--){
+                        	        	        if(data[i]!=""){
+                        		            		//neues div Element mit dem inhalt der Zeile i erstellen
+                                        			document.getElementById("emails").innerHTML+=createEmailrow(data[i],i);
+                                        }
+                                }
+
+				})
+				.catch(error => {
+				// Tritt ein, wenn ein Fehler beim Einlesen auftritt
+				console.error('Fehler beim Aktualisieren der Mails:', error);
+				});
+
+			}
+
+		function createEmailrow(s,id){
+			return '<div class="emailcontainer" id="user'+id+'container"><div class="emailperson" id="user'+id+'email">'+s+'</div><button class="emailbtnremove" id="user'+id+'remove" onclick="remove('+id+')">remove</button></div>'
+		}
+
+		function remove(i){
+			todo = {"todo" : "RemoveMail",  "index" : i};	
+			jsonData = JSON.stringify(todo);
+			// Hole Loginformationen
+			fetch(window.location.protocol + "://" +ip, {
+				method: "PUT",
+				headers: {
+						"Content-Type": "application/json"
+				},
+				body: jsonData
+				})
+			.then(response => response.text())
+			.then(data => {})
+			.catch(error => {
+			// Tritt ein, wenn ein Fehler beim Einlesen auftritt
+			console.error('Fehler beim Löschen der Email', error);
+			});
+			add(false);
+		}
+	</script>
+	</body>
+</html>
