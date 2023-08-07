@@ -73,3 +73,4 @@ while True:
 			mail(zeile)
 		datei.close()
 		time.sleep(3600)
+		exit()
