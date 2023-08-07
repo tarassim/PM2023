@@ -15,7 +15,7 @@ schwellwert = 300
 def mail(empfaenger):
 	# E-Mail-Konfiguration
 	sender_email = "noreply@pmsose2023.de" # E-Mail Adresse
-	password = "PASSWORT"  # PASSWORT des Mailaccounts einfügen
+	password = "SoSe2023"  # PASSWORT des Mailaccounts einfügen
 
 	# Verbindung zum Postausgangsserver herstellen
 	smtp_server = "smtp.ionos.de"
@@ -63,14 +63,21 @@ while True:
 		print(f'Fehler beim Parsen der JSON-Antwort: {e}')
 		# Wenn der Schwellwert unterschritten(Licht/Display an) wurde:
 	if(wert<schwellwert):
-		body = "Die Heizung ist ausgefallen:"+ str(datetime.now())
 		print(datetime.now())
-		datei = open('./log.txt','a')
-		datei.write(str(datetime.now())+"\n")
-		datei.close()
-		datei = open('./email.txt','r')
-		for zeile in datei:
-			mail(zeile)
-		datei.close()
-		time.sleep(3600)
-		exit()
+		loginhalt = {}
+		neulog=""
+		with open('./log.json','r') as datei:
+			loginhalt = json.load(datei)
+			neulog = {
+				'zeit': str(datetime.now()),
+				'ereignis': "Fehler"
+				}
+		with open('./log.json','w') as datei:	
+			loginhalt['log'].append(neulog)
+			json.dump(loginhalt, datei)
+		mailadressen = {}
+		with open('mails.json', 'r') as datei:
+			mailadressen = json.load(datei)
+		for e in mailadressen['mail']:
+			mail(e)
+
